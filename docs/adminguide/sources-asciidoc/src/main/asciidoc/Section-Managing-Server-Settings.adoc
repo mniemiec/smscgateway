@@ -1229,6 +1229,74 @@ EXAMPLES
 . You must click on the button 'Apply Changes' at the top of the window to save your settings.
   If there is an error in setting the value, then you will find the details of the error in the Management Console Log section below. 
 
+[[cassandra_user]]
+=== Cassandra Configuration - User Name
+
+[[_cassandra_user_cli]]
+==== Using CLI
+
+You can set the 'Cassandra User Name' by issuing the command `smsc set cassandrauser` with appropriate parameters as described below.
+You can verify this by issuing the command `smsc get cassandrauser` which will display the value set for this property.
+
+----
+
+Name
+	smsc set cassandrauser
+
+SYNOPSIS
+	smsc set cassandrauser <username>
+
+DESCRIPTION
+	This command is used to set the user name for Cassandra Database. Default user is `cassandra`
+	You must restart SMSC GW to take effect.
+
+----
+
+[[_cassandra_user_gui]]
+==== Using GUI
+
+.Procedure: Set Cassandra Configuration - User Name using the GUI
+. In the GUI Management Console for SMSC Gateway, click on 'Server Settings' in the left panel.
+. The main panel will display the existing Settings, segregated into eight horizontal tabs: Properties, SS7 Settings, Cassandra, Scheduler, Diameter, Processing, CDR and Home Routing.
+  Switch to the 'Cassandra' tab in the GUI.
+. You can specify the User Name by entering the value in the text field 'User Name'. For more details of this parameter, please refer to the description of the CLI command for the same in the preceding section.
+. You must click on the button 'Apply Changes' at the top of the window to save your settings.
+  If there is an error in setting the value, then you will find the details of the error in the Management Console Log section below.
+
+[[cassandra_pass]]
+=== Cassandra Configuration - Password
+
+[[_cassandra_pass_cli]]
+==== Using CLI
+
+You can set the 'Cassandra Password' by issuing the command `smsc set cassandrapass` with appropriate parameters as described below.
+You can verify this by issuing the command `smsc get cassandrapass` which will display the value set for this property.
+
+----
+
+Name
+	smsc set cassandrapass
+
+SYNOPSIS
+	smsc set cassandrapass <password>
+
+DESCRIPTION
+	This command is used to set the password for Cassandra Database. Default password is `cassandra`
+	You must restart SMSC GW to take effect.
+
+----
+
+[[_cassandra_user_gui]]
+==== Using GUI
+
+.Procedure: Set Cassandra Configuration - Password using the GUI
+. In the GUI Management Console for SMSC Gateway, click on 'Server Settings' in the left panel.
+. The main panel will display the existing Settings, segregated into eight horizontal tabs: Properties, SS7 Settings, Cassandra, Scheduler, Diameter, Processing, CDR and Home Routing.
+  Switch to the 'Cassandra' tab in the GUI.
+. You can specify the Cassandra Password by entering the value in the text field 'Password'. For more details of this parameter, please refer to the description of the CLI command for the same in the preceding section.
+. You must click on the button 'Apply Changes' at the top of the window to save your settings.
+  If there is an error in setting the value, then you will find the details of the error in the Management Console Log section below.
+
 [[_db_removinglivetablesdays]]
 === Cassandra Configuration - Removing Live Tables Days
 
@@ -2491,6 +2559,45 @@ EXAMPLES
   If there is an error in setting the value, then you will find the details of the error in the Management Console Log section below. 
 
 
+[[_generateprocessingerrorcdr]]
+=== Generate CDR for Message Processing Errors
+
+[[_generateprocessingerrorcdr_cli]]
+==== Using CLI
+
+You can set the 'generateprocessingerrorcdr' value to true/false by issuing the command `smsc set generateprocessingerrorcdr` with appropriate parameters as described below.
+You can verify this by issuing the command `smsc get generateprocessingerrorcdr` which will display the value set for this property. 
+
+----
+Name
+  smsc set generateprocessingerrorcdr
+
+SYNOPSIS
+  smsc set generateprocessingerrorcdr <true | false>
+
+DESCRIPTION
+  The SMSC can be configured to generate CDR also for unsuccessful message
+  processing. This applies both to a variety of SMSC errors (unexpected
+  internal and/or external) as well as to intentional message rejection by
+  MProc rules.
+  Default value: false
+
+EXAMPLES
+  smsc set generateprocessingerrorcdr false
+----
+
+[[_generateprocessingerrorcdr_gui]]
+==== Using GUI
+
+.Procedure: Set 'generate CDR for message processing error'  using the GUI
+. In the GUI Management Console for SMSC Gateway, click on 'Server Settings' in the left panel. 
+. The main panel will display the existing Settings, segregated into eight horizontal tabs: Properties, SS7 Settings, Cassandra, Scheduler, Diameter, Processing, CDR and Home Routing.
+  Switch to the 'CDR' tab in the GUI. 
+. You can specify if the SMSC should generate CDR for message processing errors by choosing the value true for the field 'Generate CDR for an SMSC processing error case'. For more details of this parameter, please refer to the description of the CLI command in the preceding section.
+. You must click on the button 'Apply Changes' at the top of the window to save your settings.
+  If there is an error in setting the value, then you will find the details of the error in the Management Console Log section below. 
+
+
 [[_calculatemsgpartslencdr]]
 === Calculating of message parts and characters count per a CDR record
 
@@ -2529,6 +2636,45 @@ EXAMPLES
 . You can specify if the SMSC should calculating of message parts and characters count per a CDR record by choosing the value true for the field 'Calculating of message parts and characters count per a CDR record'. For more details of this parameter, please refer to the description of the CLI command for the same in the preceding section.
 . You must click on the button 'Apply Changes' at the top of the window to save your settings.
   If there is an error in setting the value, then you will find the details of the error in the Management Console Log section below. 
+
+
+[[_delayparametersincdr]]
+=== Adding of delay parameters into a CDR record
+
+[[_delayparametersincdr_cli]]
+==== Using CLI
+
+You can set the 'delayparametersincdr' value to true/false by issuing the command `smsc set delayparametersincdr` with appropriate parameters as described below.
+You can verify this by issuing the command `smsc get delayparametersincdr` which will display the value set for this property.
+
+----
+Name
+	smsc set delayparametersincdr
+
+SYNOPSIS
+	smsc set delayparametersincdr <true | false>
+
+DESCRIPTION
+	When SMSC GW generates CDR records it can calculate a message processing time,
+	delivery delay, schedule delivery delay and delivery count per a CDR record.
+	This demands some extra calculating and therefore is disabled by default.
+	You can turn it on by this option.
+	Default value: false
+
+EXAMPLES
+	smsc set delayparametersincdr true
+----
+
+[[_delayparametersincdr_gui]]
+==== Using GUI
+
+.Procedure: Set 'Adding of delay parameters into a CDR record'  using the GUI
+. In the GUI Management Console for SMSC Gateway, click on 'Server Settings' in the left panel.
+. The main panel will display the existing Settings, segregated into eight horizontal tabs: Properties, SS7 Settings, Cassandra, Scheduler, Diameter, Processing, CDR and Home Routing.
+  Switch to the 'CDR' tab in the GUI.
+. You can specify if the SMSC should add of delay parameters into a CDR record by choosing the value true for the field 'Delay parameters in CDR'. For more details of this parameter, please refer to the description of the CLI command for the same in the preceding section.
+. You must click on the button 'Apply Changes' at the top of the window to save your settings.
+  If there is an error in setting the value, then you will find the details of the error in the Management Console Log section below.
 
 
 

@@ -21,11 +21,12 @@
  */
 package org.mobicents.smsc.library;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 import org.apache.log4j.Logger;
 import org.mobicents.protocols.ss7.map.api.smstpdu.DataCodingScheme;
 import org.mobicents.protocols.ss7.map.smstpdu.DataCodingSchemeImpl;
-
-import java.text.SimpleDateFormat;
 
 /**
  * 
@@ -35,6 +36,7 @@ import java.text.SimpleDateFormat;
 public class CdrGenerator {
 	private static final Logger logger = Logger.getLogger(CdrGenerator.class);
 
+	public static final String CDR_EMPTY = "";
 	public static final String CDR_SEPARATOR = ",";
     public static final String CDR_SUCCESS = "success";
     public static final String CDR_PARTIAL = "partial";
@@ -45,6 +47,12 @@ public class CdrGenerator {
     public static final String CDR_MPROC_REJECTED = "mproc_rejected";
     public static final String CDR_MPROC_DROPPED = "mproc_dropped";
     public static final String CDR_MPROC_DROP_PRE_DELIVERY = "mproc_drop_pre_delivery";
+
+    public static final String CDR_SUBMIT_FAILED_MO = "submit_failed_mo";
+    public static final String CDR_SUBMIT_FAILED_HR = "submit_failed_hr";
+    public static final String CDR_SUBMIT_FAILED_ESME = "submit_failed_esme";
+    public static final String CDR_SUBMIT_FAILED_SIP = "submit_failed_sip";
+    public static final String CDR_SUBMIT_FAILED_HTTP = "submit_failed_http";
 
     public static final String CDR_SUCCESS_ESME = "success_esme";
     public static final String CDR_PARTIAL_ESME = "partial_esme";
@@ -58,14 +66,14 @@ public class CdrGenerator {
 
     public static final String CDR_SUCCESS_NO_REASON = "";
     
-    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss,SSS Z");
+    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 
 	public static void generateCdr(String message) {
 		logger.debug(message);
 	}
 
     public static void generateCdr(Sms smsEvent, String status, String reason, boolean generateReceiptCdr, boolean generateCdr,
-            boolean messageIsSplitted, boolean lastSegment, boolean calculateMsgPartsLenCdr) {
+            boolean messageIsSplitted, boolean lastSegment, boolean calculateMsgPartsLenCdr, boolean delayParametersInCdr) {
         // Format is
         // SUBMIT_DATE,SOURCE_ADDRESS,SOURCE_TON,SOURCE_NPI,DESTINATION_ADDRESS,DESTINATION_TON,DESTINATION_NPI,STATUS,SYSTEM-ID,MESSAGE-ID,
 	    // VLR, IMSI, CorrelationID, First 20 char of SMS, REASON
@@ -145,9 +153,23 @@ public class CdrGenerator {
                 .append(CdrGenerator.CDR_SEPARATOR)
                 .append(charNumbers)
                 .append(CdrGenerator.CDR_SEPARATOR)
+                .append(delayParametersInCdr ? getProcessingTime(smsEvent.getSubmitDate()) : CDR_EMPTY)
+                .append(CdrGenerator.CDR_SEPARATOR)
+                .append(delayParametersInCdr ? getDeliveryDelayMilis(smsEvent.getSubmitDate(), smsEvent.getDeliverDate()) : CDR_EMPTY)
+                .append(CdrGenerator.CDR_SEPARATOR)
+                .append(delayParametersInCdr ? getScheduleDeliveryDelayMilis(smsEvent.getSubmitDate(), smsEvent.getScheduleDeliveryTime()) : CDR_EMPTY)
+                .append(CdrGenerator.CDR_SEPARATOR)
+                .append(delayParametersInCdr ? smsEvent.getDeliveryCount() : CDR_EMPTY)
+                .append(CdrGenerator.CDR_SEPARATOR)
+                .append("\"")
                 .append(getEscapedString(getFirst20CharOfSMS(smsEvent.getShortMessageText())))
-                .append(CdrGenerator.CDR_SEPARATOR).append(getEscapedString(reason));
-
+                .append("\"")
+                .append(CdrGenerator.CDR_SEPARATOR)
+                .append("\"")
+                .append(getEscapedString(reason))
+                .append("\"")
+                .append(CdrGenerator.CDR_SEPARATOR)
+                .append(smsEvent.getDeliveryState());
         CdrGenerator.generateCdr(sb.toString());
     }
 
@@ -162,7 +184,34 @@ public class CdrGenerator {
         return first20CharOfSms;
     }
 
-    private static String getEscapedString(String value) {
-	    return value.replaceAll( "\n", "n" ).replaceAll( ","," " );
+    private static String getEscapedString(final String aValue) {
+	    return aValue.replaceAll("\n", "n").replaceAll(",", " ").replace("\"", "'").replace('\u0000', '?').replace('\u0006', '?');
+    }
+
+    private static String getProcessingTime(final Date aSubmitDate) {
+        if (aSubmitDate == null) {
+            return CDR_EMPTY;
+}
+        return String.valueOf(System.currentTimeMillis() - aSubmitDate.getTime());
+    }
+
+    private static String getDeliveryDelayMilis(final Date aSubmitDate, final Date aDeliveryDate) {
+        if (aSubmitDate == null) {
+            return CDR_EMPTY;
+        }
+        if (aDeliveryDate == null) {
+            return CDR_EMPTY;
+        }
+        return String.valueOf(aDeliveryDate.getTime() - aSubmitDate.getTime());
+    }
+
+    private static String getScheduleDeliveryDelayMilis(final Date aSubmitDate, final Date aScheduleDeliveryDate) {
+        if (aSubmitDate == null) {
+            return CDR_EMPTY;
+        }
+        if (aScheduleDeliveryDate == null) {
+            return CDR_EMPTY;
+        }
+        return String.valueOf(aScheduleDeliveryDate.getTime() - aSubmitDate.getTime());
     }
 }

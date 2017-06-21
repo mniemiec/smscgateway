@@ -78,6 +78,7 @@ import org.mobicents.smsc.slee.resources.scheduler.PduRequestTimeout2;
 import org.mobicents.smsc.slee.resources.scheduler.SchedulerRaSbbInterface;
 import org.mobicents.smsc.slee.services.deliverysbb.PendingRequestsList;
 import org.mobicents.smsc.slee.services.smpp.server.events.SmsSetEvent;
+import org.mobicents.smsc.slee.services.smpp.server.rx.stub.RxSmppServerSbbUsageStub;
 import org.restcomm.slee.resource.smpp.SmppSessions;
 import org.restcomm.slee.resource.smpp.SmppTransaction;
 import org.restcomm.slee.resource.smpp.SmppTransactionACIFactory;
@@ -258,7 +259,7 @@ public class RxSmppServerSbbTest {
         this.sbb.onDeliverSm(event, aci, eventContext);
         DeliverSmResp eventResp = new DeliverSmResp();
         eventResp.setSequenceNumber(sbb.getNextSentSequenseId());
-        this.sbb.onDeliverSmResp(eventResp, aci, eventContext);
+        this.sbb.onDeliverSmRespParent(eventResp, aci, eventContext);
     }
 
     @Test(groups = { "RxSmppServer" })
@@ -281,7 +282,7 @@ public class RxSmppServerSbbTest {
         this.sbb.onDeliverSm(event, aci, eventContext);
         DeliverSmResp eventResp = new DeliverSmResp();
         eventResp.setSequenceNumber(sbb.getNextSentSequenseId());
-        this.sbb.onDeliverSmResp(eventResp, aci, eventContext);
+        this.sbb.onDeliverSmRespParent(eventResp, aci, eventContext);
     }
 
     @Test(groups = { "RxSmppServer" })
@@ -314,17 +315,17 @@ public class RxSmppServerSbbTest {
 
         DeliverSmResp eventResp = new DeliverSmResp();
         eventResp.setSequenceNumber(sbb.getNextSentSequenseId());
-        this.sbb.onDeliverSmResp(eventResp, aci, eventContext);
+        this.sbb.onDeliverSmRespParent(eventResp, aci, eventContext);
 
         eventResp = new DeliverSmResp();
 //        eventResp.setCommandStatus(2);
         eventResp.setSequenceNumber(sbb.getNextSentSequenseId());
 //        eventResp.setSequenceNumber(10001);
-        this.sbb.onDeliverSmResp(eventResp, aci, eventContext);
+        this.sbb.onDeliverSmRespParent(eventResp, aci, eventContext);
 
         eventResp = new DeliverSmResp();
         eventResp.setSequenceNumber(sbb.getNextSentSequenseId());
-        this.sbb.onPduRequestTimeout(null, aci, eventContext);
+        this.sbb.onPduRequestTimeoutParent(null, aci, eventContext);
 //        this.sbb.onDeliverSmResp(eventResp, aci, eventContext);
     }
 
@@ -359,13 +360,13 @@ public class RxSmppServerSbbTest {
 
         DeliverSmResp eventResp = new DeliverSmResp();
         eventResp.setSequenceNumber(sbb.getNextSentSequenseId());
-        this.sbb.onDeliverSmResp(eventResp, aci, eventContext);
+        this.sbb.onDeliverSmRespParent(eventResp, aci, eventContext);
         eventResp = new DeliverSmResp();
         eventResp.setSequenceNumber(sbb.getNextSentSequenseId());
-        this.sbb.onDeliverSmResp(eventResp, aci, eventContext);
+        this.sbb.onDeliverSmRespParent(eventResp, aci, eventContext);
         eventResp = new DeliverSmResp();
         eventResp.setSequenceNumber(sbb.getNextSentSequenseId());
-        this.sbb.onDeliverSmResp(eventResp, aci, eventContext);
+        this.sbb.onDeliverSmRespParent(eventResp, aci, eventContext);
     }
 
     private SmsSet prepareDatabase(ArrayList<SmsDef> lst) throws PersistenceException {
@@ -608,6 +609,11 @@ public class RxSmppServerSbbTest {
                 Address address) {
             // TODO Auto-generated method stub
             
+        }
+
+        @Override
+        public RxSmppServerSbbUsage getDefaultSbbUsageParameterSet() {
+            return new RxSmppServerSbbUsageStub();
         }
     }
 

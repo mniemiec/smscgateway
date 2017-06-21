@@ -22,6 +22,8 @@
 
 package org.mobicents.smsc.slee.services.smpp.server.rx;
 
+import static org.mobicents.smsc.slee.services.util.SbbStatsUtils.warnIfLong;
+
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.CharacterCodingException;
@@ -66,6 +68,7 @@ import org.mobicents.smsc.slee.resources.scheduler.PduRequestTimeout2;
 import org.mobicents.smsc.slee.services.deliverysbb.ConfirmMessageInSendingPool;
 import org.mobicents.smsc.slee.services.deliverysbb.DeliveryCommonSbb;
 import org.mobicents.smsc.slee.services.smpp.server.events.SmsSetEvent;
+import org.mobicents.smsc.slee.services.util.SbbStatsUtils;
 import org.restcomm.slee.resource.smpp.PduRequestTimeout;
 import org.restcomm.slee.resource.smpp.SmppSessions;
 import org.restcomm.slee.resource.smpp.SmppTransaction;
@@ -94,6 +97,8 @@ import com.cloudhopper.smpp.type.RecoverablePduException;
  */
 public abstract class RxSmppServerSbb extends DeliveryCommonSbb implements Sbb {
     private static final String className = RxSmppServerSbb.class.getSimpleName();
+
+    private static final long ONE = 1L;
 
     // TODO: default value==100 / 2
 	protected static int MAX_MESSAGES_PER_STEP = 100;
@@ -144,6 +149,13 @@ public abstract class RxSmppServerSbb extends DeliveryCommonSbb implements Sbb {
         super.sbbStore();
     }
 
+    /**
+     * Gets the default SBB usage parameter set.
+     *
+     * @return the default SBB usage parameter set
+     */
+    public abstract RxSmppServerSbbUsage getDefaultSbbUsageParameterSet();
+
     public void onServiceStartedEvent(ServiceStartedEvent event, ActivityContextInterface aci, EventContext eventContext) {
         ServiceID serviceID = event.getService();
         this.logger.info("Rx: onServiceStartedEvent: event=" + event + ", serviceID=" + serviceID);
@@ -151,6 +163,8 @@ public abstract class RxSmppServerSbb extends DeliveryCommonSbb implements Sbb {
     }
 
     public void onActivityEndEvent(ActivityEndEvent event, ActivityContextInterface aci, EventContext eventContext) {
+        final RxSmppServerSbbUsage sbbu = getDefaultSbbUsageParameterSet();
+        sbbu.incrementCounterActivityEnd(ONE);
         boolean isServiceActivity = (aci.getActivity() instanceof ServiceActivity);
         if (isServiceActivity) {
             this.logger.info("Rx: onActivityEndEvent: event=" + event + ", isServiceActivity=" + isServiceActivity);
@@ -160,8 +174,96 @@ public abstract class RxSmppServerSbb extends DeliveryCommonSbb implements Sbb {
 
     // *********
     // initial event
+    
+    public void onDeliverSm(SmsSetEvent event, ActivityContextInterface aci, EventContext eventContext) {
+        final RxSmppServerSbbUsage sbbu = getDefaultSbbUsageParameterSet();
+        sbbu.incrementCounterDeliverSm(ONE);
+        final long start = System.currentTimeMillis();
+        onDeliverSmLocal(sbbu, event);
+        sbbu.sampleDeliverSm(System.currentTimeMillis() - start);
+    }
 
-	public void onDeliverSm(SmsSetEvent event, ActivityContextInterface aci, EventContext eventContext) {
+	// *********
+    // SMPP events
+    
+    public void onSubmitSmRespParent(SubmitSmResp event, ActivityContextInterface aci, EventContext eventContext) {
+        final RxSmppServerSbbUsage sbbu = getDefaultSbbUsageParameterSet();
+        sbbu.incrementCounterSubmitSmRespParent(ONE);
+        final long start = System.currentTimeMillis();
+        onSubmitSmRespParentLocal(sbbu, event);
+        sbbu.sampleSubmitSmRespParent(System.currentTimeMillis() - start);
+    }
+
+    public void onDeliverSmRespParent(DeliverSmResp event, ActivityContextInterface aci, EventContext eventContext) {
+        final RxSmppServerSbbUsage sbbu = getDefaultSbbUsageParameterSet();
+        sbbu.incrementCounterDeliverSmRespParent(ONE);
+        final long start = System.currentTimeMillis();
+        onDeliverSmRespParentLocal(sbbu, event);
+        sbbu.sampleDeliverSmRespParent(System.currentTimeMillis() - start);
+    }
+
+    public void onPduRequestTimeoutParent(PduRequestTimeout2 event, ActivityContextInterface aci, EventContext eventContext) {
+        final RxSmppServerSbbUsage sbbu = getDefaultSbbUsageParameterSet();
+        sbbu.incrementCounterErrorPduRequestTimeoutParent(ONE);
+        final long start = System.currentTimeMillis();
+        onPduRequestTimeoutParentLocal(sbbu, event);
+        sbbu.samplePduRequestTimeoutParent(System.currentTimeMillis() - start);
+    }
+
+    public void onRecoverablePduExceptionParent(RecoverablePduException event, ActivityContextInterface aci,
+            EventContext eventContext) {
+        final RxSmppServerSbbUsage sbbu = getDefaultSbbUsageParameterSet();
+        sbbu.incrementCounterRecoverablePduExceptionParent(ONE);
+        final long start = System.currentTimeMillis();
+        onRecoverablePduExceptionParentLocal(sbbu, event);
+        sbbu.sampleRecoverablePduExceptionParent(System.currentTimeMillis() - start);
+    }
+
+    public void onDeliverSmResp(DeliverSmResp event, ActivityContextInterface aci, EventContext eventContext) {
+        final RxSmppServerSbbUsage sbbu = getDefaultSbbUsageParameterSet();
+        sbbu.incrementCounterDeliverSmResp(ONE);
+        final long start = System.currentTimeMillis();
+        onDeliverSmRespLocal(sbbu, event, aci);
+        sbbu.sampleDeliverSmResp(System.currentTimeMillis() - start);
+    }
+
+    public void onSubmitSmResp(SubmitSmResp event, ActivityContextInterface aci, EventContext eventContext) {
+        final RxSmppServerSbbUsage sbbu = getDefaultSbbUsageParameterSet();
+        sbbu.incrementCounterSubmitSmResp(ONE);
+        final long start = System.currentTimeMillis();
+        onSubmitSmRespLocal(sbbu, event, aci);
+        sbbu.sampleSubmitSmResp(System.currentTimeMillis() - start);
+    }
+
+    public void onPduRequestTimeout(PduRequestTimeout event, ActivityContextInterface aci, EventContext eventContext) {
+        final RxSmppServerSbbUsage sbbu = getDefaultSbbUsageParameterSet();
+        sbbu.incrementCounterErrorPduRequestTimeout(ONE);
+        final long start = System.currentTimeMillis();
+        onPduRequestTimeoutLocal(sbbu, event, aci);
+        sbbu.samplePduRequestTimeout(System.currentTimeMillis() - start);
+    }
+
+    public void onRecoverablePduException(RecoverablePduException event, ActivityContextInterface aci,
+            EventContext eventContext) {
+        final RxSmppServerSbbUsage sbbu = getDefaultSbbUsageParameterSet();
+        sbbu.incrementErrorRecoverablePduException(ONE);
+        final long start = System.currentTimeMillis();
+        onRecoverablePduExceptionLocal(sbbu, event, aci);
+        sbbu.sampleRecoverablePduException(System.currentTimeMillis() - start);
+    }
+
+    public abstract void fireDeliverSmRespChild(DeliverSmResp event, ActivityContextInterface activity,
+    javax.slee.Address address);
+
+    public abstract void fireSubmitSmRespChild(SubmitSmResp event, ActivityContextInterface activity, javax.slee.Address address);
+
+    public abstract void firePduRequestTimeoutChild(PduRequestTimeout2 event, ActivityContextInterface aci, javax.slee.Address address);
+
+    public abstract void fireRecoverablePduExceptionChild(RecoverablePduException event, ActivityContextInterface aci, javax.slee.Address address);
+
+    public abstract ChildRelationExt getRxSmppServerChildSbb();
+
+    private void onDeliverSmLocal(final RxSmppServerSbbUsage anSbbUsage, final SmsSetEvent event) {
 		try {
 			if (this.logger.isFineEnabled()) {
 				this.logger.fine("\nReceived Deliver SMS. event= " + event + "this=" + this);
@@ -179,6 +281,7 @@ public abstract class RxSmppServerSbb extends DeliveryCommonSbb implements Sbb {
 				this.onDeliveryError(smsSet, ErrorAction.temporaryFailure, ErrorCode.SC_SYSTEM_ERROR, s);
 			}
 		} catch (Throwable e1) {
+		    anSbbUsage.incrementCounterErrorDeliverSm(ONE);
 			logger.severe(
 					"Exception in RxSmppServerSbb.onDeliverSm() when fetching records and issuing events: "
 							+ e1.getMessage(), e1);
@@ -189,11 +292,7 @@ public abstract class RxSmppServerSbb extends DeliveryCommonSbb implements Sbb {
     // *********
     // SMPP events
 
-    public void onSubmitSmRespParent(SubmitSmResp event, ActivityContextInterface aci, EventContext eventContext) {       
-        // !!!!-
-//        logger.warning("onSubmitSmRespParent : aci=" + aci + ", activity=" + aci.getActivity());
-        // !!!!-
-
+	private void onSubmitSmRespParentLocal(final RxSmppServerSbbUsage anSbbUsage, final SubmitSmResp event) {
         try {
             if (logger.isFineEnabled()) {
                 logger.fine(String.format("onSubmitSmResp : SubmitSmResp=%s", event));
@@ -201,17 +300,21 @@ public abstract class RxSmppServerSbb extends DeliveryCommonSbb implements Sbb {
 
             this.handleResponse(event);
         } catch (Throwable e1) {
-            logger.severe("Exception in RxSmppServerSbb.onDeliverSmResp() when fetching records and issuing events: "
-                    + e1.getMessage(), e1);
-            markDeliveringIsEnded(true);
+            anSbbUsage.incrementCounterErrorSubmitSmRespParent(ONE);
+            SmsSet smsSet = this.getSmsSet();
+            logger.severe(
+                    "Exception in RxSmppServerSbb.onDeliverSmResp() when fetching records and issuing events: "
+                            + e1.getMessage() + "\nsmsSet=" + smsSet, e1);
+            if (smsSet != null) {
+                this.onDeliveryError(smsSet, ErrorAction.temporaryFailure, ErrorCode.SC_SYSTEM_ERROR,
+                        "Internal error - Exception in processing: " + event.getSequenceNumber() + ", SmsSet=" + smsSet);
+            } else {
+                markDeliveringIsEnded(true);
+            }
         }
     }
 
-    public void onDeliverSmRespParent(DeliverSmResp event, ActivityContextInterface aci, EventContext eventContext) {
-        // !!!!-
-//        logger.warning("onDeliverSmRespParent : aci=" + aci + ", activity" + aci.getActivity());
-        // !!!!-
-
+    private void onDeliverSmRespParentLocal(final RxSmppServerSbbUsage anSbbUsage, final DeliverSmResp event) {
         try {
 			if (logger.isFineEnabled()) {
 				logger.fine(String.format("\nonDeliverSmResp : DeliverSmResp=%s", event));
@@ -219,17 +322,21 @@ public abstract class RxSmppServerSbb extends DeliveryCommonSbb implements Sbb {
 
 			this.handleResponse(event);
 		} catch (Throwable e1) {
-			logger.severe("Exception in RxSmppServerSbb.onDeliverSmResp() when fetching records and issuing events: "
-					+ e1.getMessage(), e1);
-            markDeliveringIsEnded(true);
+		    anSbbUsage.incrementCounterErrorDeliverSmRespParent(ONE);
+            SmsSet smsSet = this.getSmsSet();
+            logger.severe(
+                    "Exception in RxSmppServerSbb.onDeliverSmResp() when fetching records and issuing events: "
+                            + e1.getMessage() + "\nsmsSet=" + smsSet, e1);
+            if (smsSet != null) {
+                this.onDeliveryError(smsSet, ErrorAction.temporaryFailure, ErrorCode.SC_SYSTEM_ERROR,
+                        "Internal error - Exception in processing: " + event.getSequenceNumber() + ", SmsSet=" + smsSet);
+            } else {
+                markDeliveringIsEnded(true);
+            }
 		}
 	}
-
-	public void onPduRequestTimeoutParent(PduRequestTimeout2 event, ActivityContextInterface aci, EventContext eventContext) {
-        // !!!!-
-//        logger.warning("onPduRequestTimeoutParent : aci=" + aci + ", activity" + aci.getActivity());
-        // !!!!-
-
+    
+    private void onPduRequestTimeoutParentLocal(final RxSmppServerSbbUsage anSbbUsage, final PduRequestTimeout2 event) {
 		try {
 	        if (isDeliveringEnded()) {
 	            logger.info("RxSmppServerSbb.onPduRequestTimeout(): received PduRequestTimeout but delivery process is already ended, dropping of an event");
@@ -248,6 +355,7 @@ public abstract class RxSmppServerSbb extends DeliveryCommonSbb implements Sbb {
 
 			this.onDeliveryError(smsSet, ErrorAction.temporaryFailure, ErrorCode.SC_SYSTEM_ERROR, "PduRequestTimeout: ");
 		} catch (Throwable e1) {
+		    anSbbUsage.incrementCounterErrorPduRequestTimeoutParent(ONE);
 			logger.severe(
 					"Exception in RxSmppServerSbb.onPduRequestTimeout() when fetching records and issuing events: "
 							+ e1.getMessage(), e1);
@@ -255,12 +363,7 @@ public abstract class RxSmppServerSbb extends DeliveryCommonSbb implements Sbb {
 		}
 	}
 
-    public void onRecoverablePduExceptionParent(RecoverablePduException event, ActivityContextInterface aci,
-            EventContext eventContext) {
-        // !!!!-
-//        logger.warning("onRecoverablePduExceptionParent : aci=" + aci + ", activity" + aci.getActivity());
-        // !!!!-
-
+	private void onRecoverablePduExceptionParentLocal(final RxSmppServerSbbUsage anSbbUsage, final RecoverablePduException event) {
         try {
             if (isDeliveringEnded()) {
                 logger.info("RxSmppServerSbb.onRecoverablePduException(): received RecoverablePduException but delivery process is already ended, dropping of an event");
@@ -279,85 +382,102 @@ public abstract class RxSmppServerSbb extends DeliveryCommonSbb implements Sbb {
 
             this.onDeliveryError(smsSet, ErrorAction.temporaryFailure, ErrorCode.SC_SYSTEM_ERROR, "RecoverablePduException: ");
         } catch (Throwable e1) {
+            anSbbUsage.incrementCounterErrorRecoverablePduExceptionParent(ONE);
             logger.severe(
                     "Exception in RxSmppServerSbb.onRecoverablePduException() when fetching records and issuing events: "
                             + e1.getMessage(), e1);
             markDeliveringIsEnded(true);
         }
     }
-
-    public void onDeliverSmResp(DeliverSmResp event, ActivityContextInterface aci, EventContext eventContext) {
+    
+    private void onDeliverSmRespLocal(final RxSmppServerSbbUsage anSbbUsage, final DeliverSmResp event,
+            final ActivityContextInterface aci) {
         if (logger.isFineEnabled())
-            logger.warning("onDeliverSmResp - refire to RxSmppServerChildSbb : activity=" + aci.getActivity());
+            logger.fine("onDeliverSmResp - refire to RxSmppServerChildSbb : activity=" + aci.getActivity());
 
         RxSmppServerChildLocalObject rxSmppServerSbbLocalObject = this.getRxSmppServerChildSbbObject();
 
         if (rxSmppServerSbbLocalObject != null) {
             ActivityContextInterface act = getSchedulerActivityContextInterface();
             if (act != null) {
-                act.attach(rxSmppServerSbbLocalObject);
-                fireDeliverSmRespChild(event, act, null);
+                try {
+                    act.attach(rxSmppServerSbbLocalObject);
+                    fireDeliverSmRespChild(event, act, null);
+                } catch (IllegalStateException e) {
+                    if (logger.isInfoEnabled())
+                        logger.info("onDeliverSmResp - IllegalStateException (activity is ending - dropping a SLEE event because it is not needed) : new activity="
+                                + act.getActivity() + ", event=" + event);
+                }
             }
         }
     }
 
-    public void onSubmitSmResp(SubmitSmResp event, ActivityContextInterface aci, EventContext eventContext) {
+    private void onSubmitSmRespLocal(final RxSmppServerSbbUsage anSbbUsage, final SubmitSmResp event,
+            final ActivityContextInterface aci) {
         if (logger.isFineEnabled())
-            logger.warning("onSubmitSmResp - refire to RxSmppServerChildSbb : activity=" + aci.getActivity());
+            logger.fine("onSubmitSmResp - refire to RxSmppServerChildSbb : activity=" + aci.getActivity());
 
         RxSmppServerChildLocalObject rxSmppServerSbbLocalObject = this.getRxSmppServerChildSbbObject();
 
         if (rxSmppServerSbbLocalObject != null) {
             ActivityContextInterface act = getSchedulerActivityContextInterface();
             if (act != null) {
-                act.attach(rxSmppServerSbbLocalObject);
-                fireSubmitSmRespChild(event, act, null);
+                try {
+                    act.attach(rxSmppServerSbbLocalObject);
+                    fireSubmitSmRespChild(event, act, null);
+                } catch (IllegalStateException e) {
+                    if (logger.isInfoEnabled())
+                        logger.info("onSubmitSmRespLocal - IllegalStateException (activity is ending - dropping a SLEE event because it is not needed) : new activity="
+                                + act.getActivity() + ", event=" + event);
+                }
             }
         }
     }
 
-    public void onPduRequestTimeout(PduRequestTimeout event, ActivityContextInterface aci, EventContext eventContext) {
+    private void onPduRequestTimeoutLocal(final RxSmppServerSbbUsage anSbbUsage, final PduRequestTimeout event,
+            final ActivityContextInterface aci) {
         if (logger.isFineEnabled())
-            logger.warning("onPduRequestTimeout - refire to RxSmppServerChildSbb : activity=" + aci.getActivity());
+            logger.fine("onPduRequestTimeout - refire to RxSmppServerChildSbb : activity=" + aci.getActivity());
 
         RxSmppServerChildLocalObject rxSmppServerSbbLocalObject = this.getRxSmppServerChildSbbObject();
 
         if (rxSmppServerSbbLocalObject != null) {
             ActivityContextInterface act = getSchedulerActivityContextInterface();
             if (act != null) {
-                act.attach(rxSmppServerSbbLocalObject);
-                PduRequestTimeout2 event2 = new PduRequestTimeout2(event.getPduRequest(), event.getSystemId());
-                firePduRequestTimeoutChild(event2, act, null);
+                try {
+                    act.attach(rxSmppServerSbbLocalObject);
+                    PduRequestTimeout2 event2 = new PduRequestTimeout2(event.getPduRequest(), event.getSystemId());
+                    firePduRequestTimeoutChild(event2, act, null);
+                } catch (IllegalStateException e) {
+                    if (logger.isInfoEnabled())
+                        logger.info("onPduRequestTimeout - IllegalStateException (activity is ending - dropping a SLEE event because it is not needed) : new activity="
+                                + act.getActivity() + ", event=" + event);
+                }
             }
         }
     }
 
-    public void onRecoverablePduException(RecoverablePduException event, ActivityContextInterface aci,
-            EventContext eventContext) {
+    private void onRecoverablePduExceptionLocal(final RxSmppServerSbbUsage anSbbUsage,
+            final RecoverablePduException event, final ActivityContextInterface aci) {
         if (logger.isFineEnabled())
-            logger.warning("onRecoverablePduException - refire to RxSmppServerChildSbb : activity=" + aci.getActivity());
+            logger.fine("onRecoverablePduException - refire to RxSmppServerChildSbb : activity=" + aci.getActivity());
 
         RxSmppServerChildLocalObject rxSmppServerSbbLocalObject = this.getRxSmppServerChildSbbObject();
 
         if (rxSmppServerSbbLocalObject != null) {
             ActivityContextInterface act = getSchedulerActivityContextInterface();
             if (act != null) {
-                act.attach(rxSmppServerSbbLocalObject);
-                fireRecoverablePduExceptionChild(event, act, null);
+                try {
+                    act.attach(rxSmppServerSbbLocalObject);
+                    fireRecoverablePduExceptionChild(event, act, null);
+                } catch (IllegalStateException e) {
+                    if (logger.isInfoEnabled())
+                        logger.info("onRecoverablePduException - IllegalStateException (activity is ending - dropping a SLEE event because it is not needed) : new activity="
+                                + act.getActivity() + ", event=" + event);
+                }
             }
         }
     }
-
-    public abstract void fireDeliverSmRespChild(DeliverSmResp event, ActivityContextInterface activity,
-            javax.slee.Address address);
-
-    public abstract void fireSubmitSmRespChild(SubmitSmResp event, ActivityContextInterface activity, javax.slee.Address address);
-
-    public abstract void firePduRequestTimeoutChild(PduRequestTimeout2 event, ActivityContextInterface aci, javax.slee.Address address);
-
-    public abstract void fireRecoverablePduExceptionChild(RecoverablePduException event, ActivityContextInterface aci, javax.slee.Address address);
-
-    public abstract ChildRelationExt getRxSmppServerChildSbb();
 
     private RxSmppServerChildLocalObject getRxSmppServerChildSbbObject() {
         ChildRelationExt relation = getRxSmppServerChildSbb();
@@ -418,7 +538,8 @@ public abstract class RxSmppServerSbb extends DeliveryCommonSbb implements Sbb {
                     // this should not be
                     throw new SmscProcessingException(
                             "sendDeliverSm: getCurrentMessage() returns null sms for msgNum in SendingPool " + poolIndex, 0, 0,
-                            SmscProcessingException.HTTP_ERROR_CODE_NOT_SET, null);
+                            SmscProcessingException.HTTP_ERROR_CODE_NOT_SET, null,
+                            SmscProcessingException.INTERNAL_ERROR_SEND_DELIVER_SM_000007);
                 }
 
                 // message splitting staff
@@ -591,7 +712,8 @@ public abstract class RxSmppServerSbb extends DeliveryCommonSbb implements Sbb {
             throw new SmscProcessingException(
                     "RxSmppServerSbb.sendDeliverSm(): Exception while trying to send DELIVERY Report for received SmsEvent="
                             + e.getMessage() + "\nsmsSet: " + smsSet,
-                    0, 0, SmscProcessingException.HTTP_ERROR_CODE_NOT_SET, null, e);
+                    0, 0, SmscProcessingException.HTTP_ERROR_CODE_NOT_SET, null, e,
+                    SmscProcessingException.INTERNAL_ERROR_SEND_DELIVER_SM_000008);
 		}
 	}
 
@@ -649,7 +771,7 @@ public abstract class RxSmppServerSbb extends DeliveryCommonSbb implements Sbb {
     protected void onDeliveryTimeout(SmsSet smsSet, String reason) {
         this.onDeliveryError(smsSet, ErrorAction.temporaryFailure, ErrorCode.SC_SYSTEM_ERROR, reason);
     }
-
+    
     /**
      * Processing of a positive delivery response to smpp destination.
      *
@@ -657,6 +779,7 @@ public abstract class RxSmppServerSbb extends DeliveryCommonSbb implements Sbb {
      * @throws Exception
      */
     private void handleResponse(BaseSmResp event) throws Exception {
+        long ts = System.currentTimeMillis();
         if (isDeliveringEnded()) {
             if (logger.isFineEnabled()) {
                 this.logger.fine("SMPP Response received when DeliveringEnded state: status=" + event.getCommandStatus());
@@ -730,13 +853,16 @@ public abstract class RxSmppServerSbb extends DeliveryCommonSbb implements Sbb {
                     synchronized (lock) {
                         // marking the message in cache as delivered
                         this.commitSendingPoolMsgCount();
+                        ts = warnIfLong(logger, ts, "handleResponse/status=0/in-lock/commitSendingPoolMsgCount");
 
                         // now we are trying to sent other messages
                         if (this.getTotalUnsentMessageCount() > 0) {
                             try {
                                 this.sendDeliverSm(smsSet);
+                                ts = warnIfLong(logger, ts, "handleResponse/status=0/in-lock/sendDeliverSm");
                                 return;
                             } catch (SmscProcessingException e) {
+                                SbbStatsUtils.handleProcessingException(e, getDefaultSbbUsageParameterSet());
                                 String s = "SmscProcessingException when sending next sendDeliverSm()=" + e.getMessage()
                                         + ", Message=" + sms;
                                 logger.severe(s, e);
@@ -775,6 +901,7 @@ public abstract class RxSmppServerSbb extends DeliveryCommonSbb implements Sbb {
      * @param reason
      */
     private void onDeliveryError(SmsSet smsSet, ErrorAction errorAction, ErrorCode smStatus, String reason) {
+        getDefaultSbbUsageParameterSet().incrementCounterErrorDelivery(ONE);
         try {
             smscStatAggregator.updateMsgOutFailedAll();
 
@@ -829,6 +956,7 @@ public abstract class RxSmppServerSbb extends DeliveryCommonSbb implements Sbb {
                 }
             }
         } catch (Throwable e) {
+            getDefaultSbbUsageParameterSet().incrementCounterErrorDeliveryException(ONE);
             logger.severe("Exception in RxSmppServerSbb.onDeliveryError(): " + e.getMessage(), e);
             markDeliveringIsEnded(true);
         }

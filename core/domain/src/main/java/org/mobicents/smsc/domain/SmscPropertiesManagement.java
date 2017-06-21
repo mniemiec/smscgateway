@@ -1,5 +1,5 @@
 /*
- * TeleStax, Open Source Cloud Communications  
+ * TeleStax, Open Source Cloud Communications
  * Copyright 2012, Telestax Inc and individual contributors
  * by the @authors tag. See the copyright.txt in the distribution for a
  * full listing of individual contributors.
@@ -87,8 +87,10 @@ public class SmscPropertiesManagement implements SmscPropertiesManagementMBean {
 	private static final String REVISE_SECONDS_ON_SMSC_START = "reviseSecondsOnSmscStart";
 	private static final String PROCESSING_SMS_SET_TIMEOUT = "processingSmsSetTimeout";
     private static final String GENERATE_RECEIPT_CDR = "generateReceiptCdr";
+    private static final String GENERATE_REJECTION_CDR = "generateRejectionCdr";
     private static final String GENERATE_TEMP_FAILURE_CDR = "generateTempFailureCdr";
     private static final String CALCULATE_MSG_PARTS_LEN_CDR = "calculateMsgPartsLenCdr";
+    private static final String DELAY_PARAMETERS_IN_CDR = "delayParametersInCdr";
     private static final String RECEIPTS_DISABLING = "receiptsDisabling";
     private static final String INCOME_RECEIPTS_PROCESSING = "incomeReceiptsProcessing";
     private static final String ENABLE_INTERMEDIATE_RECEIPTS = "enableIntermediateReceipts";
@@ -137,6 +139,8 @@ public class SmscPropertiesManagement implements SmscPropertiesManagementMBean {
 
     private static final String DELIVERY_PAUSE = "deliveryPause";
 
+    private static final String CASSANDRA_USER = "cassandraUser";
+    private static final String CASSANDRA_PASS = "cassandraPass";
 
 	private static final String TAB_INDENT = "\t";
 	private static final String CLASS_ATTRIBUTE = "type";
@@ -199,6 +203,10 @@ public class SmscPropertiesManagement implements SmscPropertiesManagementMBean {
 	private String keyspaceName = "RestCommSMSC";
 	private String clusterName = "RestCommSMSC";
 
+    // credential for cassandra
+    private String cassandraUser = "cassandra";
+    private String cassandraPass = "cassandra";
+
 	// period of fetching messages from a database for delivering
 	// private long fetchPeriod = 5000; // that was C1
 	private long fetchPeriod = 200;
@@ -242,9 +250,15 @@ public class SmscPropertiesManagement implements SmscPropertiesManagementMBean {
     // true: we generate CDR also for temp failures (along with success and permanent failure cases)
     // false: we generate CDR only for success and permanent failure cases (no CDRs for temp failures)
     private boolean generateTempFailureCdr = true;
+    // true: We generate CDR also for SMSC message rejection by mproc rule at forwarding.
+    // false: CDR entries are not generated on the SMSC message rejection by mproc rule at forwarding.
+    private boolean generateRejectionCdr = false;
     // true: when CDR generating SMSC GW will calculate MSG_PARTS and CHAR_NUMBERS fields (that demands extra calculating)
     // false: not calculate
     private boolean calculateMsgPartsLenCdr = false;
+    // true: when CDR generating SMSC GW will calculate processingTime, deliveryDelay, scheduleDeliveryDelay and deliveryCount (that demands extra calculating)
+    // false: not calculate
+    private boolean delayParametersInCdr = false;
     // true: generating of delivery receipts will be disabled for all messages
     private boolean receiptsDisabling = false;
     // true: processing of incoming delivery receipts from remote SMSC GW: replacing of messageId in a receipt by a local
@@ -580,6 +594,34 @@ public class SmscPropertiesManagement implements SmscPropertiesManagementMBean {
 		this.store();
 	}
 
+    public void setCassandraUser(String user) throws IllegalArgumentException {
+
+        if (user.trim().equals("")) {
+            throw new IllegalArgumentException("User name can not be empty");
+        }
+
+        this.cassandraUser = user.trim();
+        this.store();
+    }
+
+    public String getCassandraUser() {
+        return this.cassandraUser;
+    }
+
+    public void setCassandraPass(String pass) throws IllegalArgumentException {
+
+        if (pass.trim().equals("")) {
+            throw new IllegalArgumentException("Password can not be empty");
+        }
+
+        this.cassandraPass = pass.trim();
+        this.store();
+    }
+
+    public String getCassandraPass() {
+        return this.cassandraPass;
+    }
+
 	@Override
 	public int getMaxMessageLengthReducer() {
 		return maxMessageLengthReducer;
@@ -838,6 +880,17 @@ public class SmscPropertiesManagement implements SmscPropertiesManagementMBean {
     @Override
     public void setCalculateMsgPartsLenCdr(boolean calculateMsgPartsLenCdr) {
         this.calculateMsgPartsLenCdr = calculateMsgPartsLenCdr;
+        this.store();
+    }
+
+    @Override
+    public boolean getDelayParametersInCdr() {
+        return this.delayParametersInCdr;
+    }
+
+    @Override
+    public void setDelayParametersInCdr(boolean delayParametersInCdr) {
+        this.delayParametersInCdr = delayParametersInCdr;
         this.store();
     }
 
@@ -1342,6 +1395,25 @@ public class SmscPropertiesManagement implements SmscPropertiesManagementMBean {
         this.store();
     }
 
+    /**
+     * Checks if CDRs are to be generated at the processing errors.
+     *
+     * @return true, if CDRs should be generated
+     */
+    @Override
+    public boolean isGenerateRejectionCdr() {
+        return generateRejectionCdr;
+    }
+
+    /**
+     * Sets the generate processing error CDRs flag.
+     *
+     * @param aGenerateRejectionCdr the new value of generate processing error CDRs flag
+     */
+    @Override
+    public void setGenerateRejectionCdr(final boolean aGenerateRejectionCdr) {
+        generateRejectionCdr = aGenerateRejectionCdr;
+    }
 
     public void start() throws Exception {
 
@@ -1467,7 +1539,9 @@ public class SmscPropertiesManagement implements SmscPropertiesManagementMBean {
 			writer.write(this.processingSmsSetTimeout, PROCESSING_SMS_SET_TIMEOUT, Integer.class);
             writer.write(this.generateReceiptCdr, GENERATE_RECEIPT_CDR, Boolean.class);
             writer.write(this.generateTempFailureCdr, GENERATE_TEMP_FAILURE_CDR, Boolean.class);
+            writer.write(this.generateRejectionCdr, GENERATE_REJECTION_CDR, Boolean.class);
             writer.write(this.calculateMsgPartsLenCdr, CALCULATE_MSG_PARTS_LEN_CDR, Boolean.class);
+            writer.write(this.delayParametersInCdr, DELAY_PARAMETERS_IN_CDR, Boolean.class);
 
             writer.write(this.receiptsDisabling, RECEIPTS_DISABLING, Boolean.class);
             writer.write(this.incomeReceiptsProcessing, INCOME_RECEIPTS_PROCESSING, Boolean.class);
@@ -1506,6 +1580,9 @@ public class SmscPropertiesManagement implements SmscPropertiesManagementMBean {
             writer.write(this.httpDefaultRDDeliveryReceipt, HTTP_DEFAULT_RD_DELIVERY_RECEIPT, Integer.class);
             writer.write(this.httpDefaultRDIntermediateNotification, HTTP_DEFAULT_RD_INTERMEDIATE_NOTIFICATION, Integer.class);
             writer.write(this.httpDefaultDataCoding, HTTP_DEFAULT_DATA_CODING, Integer.class);
+
+            writer.write(this.cassandraUser, CASSANDRA_USER, String.class);
+            writer.write(this.cassandraPass, CASSANDRA_PASS, String.class);
 
             writer.write(this.diameterDestRealm, DIAMETER_DEST_REALM, String.class);
 			writer.write(this.diameterDestHost, DIAMETER_DEST_HOST, String.class);
@@ -1693,9 +1770,17 @@ public class SmscPropertiesManagement implements SmscPropertiesManagementMBean {
             if (valB != null) {
                 this.generateTempFailureCdr = valB.booleanValue();
             }
+            valB = reader.read(GENERATE_REJECTION_CDR, Boolean.class);
+            if (valB != null) {
+                this.generateRejectionCdr = valB.booleanValue();
+            }
             valB = reader.read(CALCULATE_MSG_PARTS_LEN_CDR, Boolean.class);
             if (valB != null) {
                 this.calculateMsgPartsLenCdr = valB.booleanValue();
+            }
+            valB = reader.read(DELAY_PARAMETERS_IN_CDR, Boolean.class);
+            if (valB != null) {
+                this.delayParametersInCdr = valB.booleanValue();
             }
 
             valB = reader.read(RECEIPTS_DISABLING, Boolean.class);
@@ -1822,6 +1907,14 @@ public class SmscPropertiesManagement implements SmscPropertiesManagementMBean {
             val = reader.read(HTTP_DEFAULT_DATA_CODING, Integer.class);
             if (val != null)
                 this.httpDefaultDataCoding = val;
+
+            vals = reader.read(CASSANDRA_USER, String.class);
+            if (vals != null)
+                this.cassandraUser = vals;
+
+            vals = reader.read(CASSANDRA_PASS, String.class);
+            if (vals != null)
+                this.cassandraPass = vals;
 
             this.diameterDestRealm = reader.read(DIAMETER_DEST_REALM, String.class);
 

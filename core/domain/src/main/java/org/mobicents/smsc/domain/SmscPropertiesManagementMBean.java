@@ -169,9 +169,17 @@ public interface SmscPropertiesManagementMBean {
 
     public void setGenerateTempFailureCdr(boolean generateTempFailureCdr);
 
+    public boolean isGenerateRejectionCdr();
+
+    public void setGenerateRejectionCdr(boolean aGenerateRejectionCdr);
+
     public boolean getCalculateMsgPartsLenCdr();
 
     public void setCalculateMsgPartsLenCdr(boolean calculateMsgPartsLenCdr);
+
+    public boolean getDelayParametersInCdr();
+
+    public void setDelayParametersInCdr(boolean delayParametersInCdr);
 
     public MoChargingType getMoCharging();
 
@@ -372,5 +380,13 @@ public interface SmscPropertiesManagementMBean {
     public long getMaxMessageId();
 
     public void setMaxMessageId(long maxMessageId) throws IllegalArgumentException;
+
+    public void setCassandraUser(String user) throws  IllegalArgumentException;
+
+    public String getCassandraUser();
+
+    public void setCassandraPass(String pass) throws  IllegalArgumentException;
+
+    public String getCassandraPass();
 
 }

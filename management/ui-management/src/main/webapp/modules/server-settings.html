@@ -303,6 +303,20 @@ Empty TC-BEGIN is used in MAP Version 2 and 3 for forwardSM and Mt- ForwardSM re
 									<input id="cassandraclustername" type="text" class="input-mini" style="width: 100px; margin-right: 12px; text-align: center;" value="0" />
 								</span>                         
 							</div>
+                             <div id="div-cassandrauser" class="control-group">
+								<span class="input-prepend" data-toggle="tooltip" data-placement="bottom" title="cassandra user name">
+									<span class="add-on">User</span>
+									<input id="cassandrauser" type="text" class="input-mini" style="width: 100px; margin-right: 12px; text-align: center;" value="0" />
+								</span>
+							</div>
+
+							<div id="div-cassandrapass" class="control-group">
+								<span class="input-prepend" data-toggle="tooltip" data-placement="bottom" title="cassandra password">
+									<span class="add-on">Password</span>
+									<input id="cassandrapass" type="text" class="input-mini" style="width: 100px; margin-right: 12px; text-align: center;" value="0" />
+								</span>
+							</div>
+
 							<h5 style="border-bottom: 1px solid #DDD;">Archive Table Configuration</h5>
 							<div id="div-removinglivetablesdays" class="control-group">
 								<span class="input-prepend" data-toggle="tooltip" data-placement="bottom" title="configure the SMSC to automatically drop LIVE tables from the Cassandra Database. The SMSC will attempt to delete tables just after midnight and after every SMSC restart. This parameter is used to specify the number of days the LIVE tables should be kept before attempting to drop them automatically. If this value is specified as 0, the SMSC will not drop tables automatically. In this case you must manually drop tables. You must specify a value of 3 or more. You can not set this value to 1 or 2 days. This is to ensure the tables will be kept for a minimum of 2 days after creation date. The SMSC wil attempt to delete tables for one day. If the Cassandra Database keeps tables for older days, then the administrator should drop these manually.">
@@ -601,7 +615,16 @@ day. If the Cassandra Database keeps tables for older days, then the administrat
 										<option>false</option>
 									</select>
 								</span>                         
-							</div>	
+							</div>
+							<div id="div-generateRejectionCdr" class="control-group">
+                                <span class="input-prepend" data-toggle="tooltip" data-placement="bottom" title="The SMSC can be configured to generate CDR for message rejection by MProc rule.">
+                                  <span class="add-on">Generate CDR for message rejection by MProc rule</span>
+                                  <select id="generateRejectionCdr" >
+                                    <option>true</option>
+                                    <option>false</option>
+                                  </select>
+                                </span>
+							</div>
 							<div id="div-calculateMsgPartsLenCdr" class="control-group">
 								<span class="input-prepend" data-toggle="tooltip" data-placement="bottom" title="When SMSC GW generates CDR records it can calculate message parts and characters count per a CDR record. Message parts count means a count of parts to that SMSC GW will have to split a long messages when sending messages into SS7 network. This demands some extra calculating and therefore is disabled by default. You can turn it on by this option.">
 									<span class="add-on">Calculating of message parts and characters count per a CDR record</span>
@@ -610,7 +633,16 @@ day. If the Cassandra Database keeps tables for older days, then the administrat
 										<option>false</option>
 									</select>
 								</span>                         
-							</div>	
+							</div>
+							<div id="div-delayParametersInCdr" class="control-group">
+								<span class="input-prepend" data-toggle="tooltip" data-placement="bottom" title="When SMSC GW generates CDR records it can calculate a message processing time, delivery delay, schedule delivery delay and delivery count per a CDR record. This demands some extra calculating and therefore is disabled by default. You can turn it on by this option.">
+									<span class="add-on">Delay parameters in CDR</span>
+									<select id="delayParametersInCdr" >
+										<option>true</option>
+										<option>false</option>
+									</select>
+								</span>
+							</div>
 
 
 							&nbsp;
@@ -915,7 +947,9 @@ day. If the Cassandra Database keeps tables for older days, then the administrat
 										$("#cassandraport").val(cassandraport);
 										$("#cassandrakeyspace").val(response.value.KeyspaceName);
 										$("#cassandraclustername").val(response.value.ClusterName);
-										
+										$("#cassandrauser").val(response.value.CassandraUser);
+										$("#cassandrapass").val(response.value.CassandraPass);
+
 										$("#removinglivetablesdays").val(response.value.RemovingLiveTablesDays);
 										$("#removingarchivetabledays").val(response.value.RemovingArchiveTablesDays);										
 									}],
@@ -1064,13 +1098,24 @@ day. If the Cassandra Database keeps tables for older days, then the administrat
 										} else {
 											generateTempFailureCdr.options[1].selected = true;
 										}
+                                        var generateRejectionCdrTmp = response.value.GenerateRejectionCdr
+                                        if(generateRejectionCdrTmp){
+                                          generateRejectionCdr.options[0].selected = true;
+                                        } else {
+                                          generateRejectionCdr.options[1].selected = true;
+                                        }
 										var calculateMsgPartsLenCdrTmp = response.value.CalculateMsgPartsLenCdr
 										if(calculateMsgPartsLenCdrTmp){
 											calculateMsgPartsLenCdr.options[0].selected = true;
 										} else {
 											calculateMsgPartsLenCdr.options[1].selected = true;
 										}
-
+										var delayParametersInCdrTmp = response.value.DelayParametersInCdr
+										if(delayParametersInCdrTmp){
+											delayParametersInCdr.options[0].selected = true;
+										} else {
+											delayParametersInCdr.options[1].selected = true;
+										}
 										var FLAG_DATAGRAMM = 0x01;
 										var FLAG_TRANSACTIONAL = 0x02;
 										var FLAG_STORE_AND_FORWARD = 0x04;
@@ -1714,7 +1759,22 @@ day. If the Cassandra Database keeps tables for older days, then the administrat
 			    		}
 						
 						var cassandraclustername = $("#cassandraclustername").val();
-						
+
+						var cassandrauser = $("#cassandrauser").val();
+						if(cassandrauser.trim() == "") {
+			    			$("#div-cassandrauser").addClass("error");
+			    			formInvalid = true;
+			    		} else if($("#div-cassandrauser").hasClass("error")) {
+			    			$("#div-cassandrauser").removeClass("error");
+			    		}
+
+						var cassandrapass =  $("#cassandrapass").val();
+						if(cassandrapass.trim() == "") {
+			    			$("#div-cassandrapass").addClass("error");
+			    			formInvalid = true;
+			    		} else if($("#div-cassandrapass").hasClass("error")) {
+			    			$("#div-cassandrapass").removeClass("error");
+			    		}
 						
 						var removinglivetablesdays = $("#removinglivetablesdays").val();
 						if(removinglivetablesdays.trim() == "") {
@@ -1749,6 +1809,8 @@ day. If the Cassandra Database keeps tables for older days, then the administrat
 									{ type: "write", mbean: mbeanSearch, attribute: "DbPort", value: cassandraport },
 									{ type: "write", mbean: mbeanSearch, attribute: "KeyspaceName", value: cassandrakeyspace },
 									{ type: "write", mbean: mbeanSearch, attribute: "ClusterName", value: cassandraclustername },
+									{ type: "write", mbean: mbeanSearch, attribute: "CassandraUser", value: cassandrauser },
+									{ type: "write", mbean: mbeanSearch, attribute: "CassandraPass", value: cassandrapass },
 									{ type: "write", mbean: mbeanSearch, attribute: "RemovingLiveTablesDays", value: removinglivetablesdays },
 									{ type: "write", mbean: mbeanSearch, attribute: "RemovingArchiveTablesDays", value: removingarchivetabledays },
 								],
@@ -2029,9 +2091,12 @@ day. If the Cassandra Database keeps tables for older days, then the administrat
 						var generateReceiptCdr = e1.options[e1.selectedIndex].text;
 						e1 = document.getElementById("generateTempFailureCdr");
 						var generateTempFailureCdr = e1.options[e1.selectedIndex].text;
+                        e1 = document.getElementById("generateRejectionCdr");
+                        var generateRejectionCdr = e1.options[e1.selectedIndex].text;
 						e1 = document.getElementById("calculateMsgPartsLenCdr");
 						var calculateMsgPartsLenCdr = e1.options[e1.selectedIndex].text;
-
+						e1 = document.getElementById("delayParametersInCdr");
+						var delayParametersInCdr = e1.options[e1.selectedIndex].text;
 						var FLAG_DATAGRAMM = 0x01;
 						var FLAG_TRANSACTIONAL = 0x02;
 						var FLAG_STORE_AND_FORWARD = 0x04;
@@ -2068,7 +2133,9 @@ day. If the Cassandra Database keeps tables for older days, then the administrat
 								[
 									{ type: "write", mbean: mbeanSearch, attribute: "GenerateReceiptCdr", value: generateReceiptCdr },
 									{ type: "write", mbean: mbeanSearch, attribute: "GenerateTempFailureCdr", value: generateTempFailureCdr },
+                                    { type: "write", mbean: mbeanSearch, attribute: "GenerateRejectionCdr", value: generateRejectionCdr },
 									{ type: "write", mbean: mbeanSearch, attribute: "CalculateMsgPartsLenCdr", value: calculateMsgPartsLenCdr },
+									{ type: "write", mbean: mbeanSearch, attribute: "DelayParametersInCdr", value: delayParametersInCdr },
 									{ type: "write", mbean: mbeanSearch, attribute: "GenerateCdrInt", value: generateCdrTmp },
 									{ type: "write", mbean: mbeanSearch, attribute: "GenerateArchiveTableInt", value: generateArchiveTableTmp },
 								],

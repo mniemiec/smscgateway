@@ -45,7 +45,8 @@ import org.restcomm.smpp.SmppEncoding;
 /**
  * @author amit bhayani
  * @author sergey vetyutnev
- * 
+ * @author tran nhan
+ *
  */
 public class SMSCShellExecutor implements ShellExecutor {
 
@@ -839,8 +840,12 @@ public class SMSCShellExecutor implements ShellExecutor {
                 smscPropertiesManagement.setGenerateReceiptCdr(Boolean.parseBoolean(options[3]));
             } else if (parName.equals("generatetempfailurecdr")) {
                 smscPropertiesManagement.setGenerateTempFailureCdr(Boolean.parseBoolean(options[3]));
+            } else if (parName.equals("generaterejectioncdr")) {
+                smscPropertiesManagement.setGenerateRejectionCdr(Boolean.parseBoolean(options[3]));
             } else if (parName.equals("calculatemsgpartslencdr")) {
                 smscPropertiesManagement.setCalculateMsgPartsLenCdr(Boolean.parseBoolean(options[3]));
+            } else if (parName.equals("delayparametersincdr")) {
+                smscPropertiesManagement.setDelayParametersInCdr(Boolean.parseBoolean(options[3]));
             } else if (parName.equals("receiptsdisabling")) {
                 smscPropertiesManagement.setReceiptsDisabling(Boolean.parseBoolean(options[3]));
             } else if (parName.equals("enableintermediatereceipts")) {
@@ -1005,7 +1010,13 @@ public class SMSCShellExecutor implements ShellExecutor {
             } else if (parName.equals("deliverypause")) {
                 boolean val = Boolean.parseBoolean(options[3]);
                 smscPropertiesManagement.setDeliveryPause(val);
-			} else {
+			} else if (parName.equals("cassandrauser")) {
+                String val = String.valueOf(options[3]);
+                smscPropertiesManagement.setCassandraUser(val);
+            } else if (parName.equals("cassandrapass")) {
+                String val = String.valueOf(options[3]);
+                smscPropertiesManagement.setCassandraPass(val);
+            } else {
 				return SMSCOAMMessages.INVALID_COMMAND;
 			}
 		} catch (IllegalArgumentException e) {
@@ -1168,8 +1179,12 @@ public class SMSCShellExecutor implements ShellExecutor {
                 sb.append(smscPropertiesManagement.getGenerateReceiptCdr());
             } else if (parName.equals("generatetempfailurecdr")) {
                 sb.append(smscPropertiesManagement.getGenerateTempFailureCdr());
+            } else if (parName.equals("generaterejectioncdr")) {
+                sb.append(smscPropertiesManagement.isGenerateRejectionCdr());
             } else if (parName.equals("calculatemsgpartslencdr")) {
                 sb.append(smscPropertiesManagement.getCalculateMsgPartsLenCdr());
+            } else if (parName.equals("delayparametersincdr")) {
+                sb.append(smscPropertiesManagement.getDelayParametersInCdr());
             } else if (parName.equals("receiptsdisabling")) {
                 sb.append(smscPropertiesManagement.getReceiptsDisabling());
             } else if (parName.equals("enableintermediatereceipts")) {
@@ -1268,7 +1283,12 @@ public class SMSCShellExecutor implements ShellExecutor {
 
             } else if (parName.equals("deliverypause")) {
                 sb.append(smscPropertiesManagement.isDeliveryPause());
-			} else {
+			} else if (parName.equals("cassandrauser")) {
+                sb.append(smscPropertiesManagement.getCassandraUser());
+            } else if (parName.equals("cassandrapass")) {
+                sb.append(smscPropertiesManagement.getCassandraPass());
+            }
+            else {
 				return SMSCOAMMessages.INVALID_COMMAND;
 			}
 
@@ -1453,6 +1473,10 @@ public class SMSCShellExecutor implements ShellExecutor {
             sb.append(smscPropertiesManagement.getCalculateMsgPartsLenCdr());
             sb.append("\n");
 
+            sb.append("delayparametersincdr = ");
+            sb.append(smscPropertiesManagement.getDelayParametersInCdr());
+            sb.append("\n");
+
             sb.append("receiptsdisabling = ");
             sb.append(smscPropertiesManagement.getReceiptsDisabling());
             sb.append("\n");
@@ -1627,7 +1651,15 @@ public class SMSCShellExecutor implements ShellExecutor {
             sb.append(smscPropertiesManagement.isDeliveryPause());
             sb.append("\n");
 
-			return sb.toString();
+            sb.append("cassandrauser = ");
+            sb.append(smscPropertiesManagement.getCassandraUser());
+            sb.append("\n");
+
+            sb.append("cassandrapass = ");
+            sb.append(smscPropertiesManagement.getCassandraPass());
+            sb.append("\n");
+
+            return sb.toString();
 		}
 	}
 

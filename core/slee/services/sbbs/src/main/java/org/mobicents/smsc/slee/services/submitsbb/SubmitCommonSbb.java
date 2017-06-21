@@ -39,6 +39,7 @@ import org.mobicents.smsc.domain.SmscCongestionControl;
 import org.mobicents.smsc.domain.SmscPropertiesManagement;
 import org.mobicents.smsc.domain.SmscStatAggregator;
 import org.mobicents.smsc.domain.StoreAndForwordMode;
+import org.mobicents.smsc.library.CdrGenerator;
 import org.mobicents.smsc.library.MessageUtil;
 import org.mobicents.smsc.library.Sms;
 import org.mobicents.smsc.library.SmsSetCache;
@@ -46,7 +47,6 @@ import org.mobicents.smsc.library.SmscProcessingException;
 import org.mobicents.smsc.library.TargetAddress;
 import org.mobicents.smsc.mproc.MProcRuleRaProvider;
 import org.mobicents.smsc.mproc.impl.MProcResult;
-import org.mobicents.smsc.slee.resources.mproc.MProcRuleRaVersion;
 import org.mobicents.smsc.slee.resources.persistence.PersistenceRAInterface;
 import org.mobicents.smsc.slee.resources.scheduler.SchedulerRaSbbInterface;
 import org.mobicents.smsc.slee.services.charging.ChargingMedium;
@@ -74,7 +74,7 @@ public abstract class SubmitCommonSbb implements Sbb {
     public static final ResourceAdaptorTypeID MPROC_RATYPE_ID = new ResourceAdaptorTypeID("MProcResourceAdaptorType",
             "org.mobicents", "1.0");
     private static final String MPROC_RA_LINK = "MProcResourceAdaptor";
-    
+
     protected Tracer logger;
     protected SbbContextExt sbbContext;
 
@@ -194,7 +194,8 @@ public abstract class SubmitCommonSbb implements Sbb {
         // checking if SMSC is stopped
         if (smscPropertiesManagement.isSmscStopped()) {
             SmscProcessingException e = new SmscProcessingException("SMSC is stopped", SmppConstants.STATUS_SYSERR,
-                    MAPErrorCode.facilityNotSupported, SmscProcessingException.HTTP_ERROR_CODE_NOT_SET, null);
+                    MAPErrorCode.facilityNotSupported, SmscProcessingException.HTTP_ERROR_CODE_NOT_SET, null,
+                    SmscProcessingException.INTERNAL_ERROR_STATE_STOPPED);
             e.setSkipErrorLogging(true);
             throw e;
         }
@@ -202,14 +203,16 @@ public abstract class SubmitCommonSbb implements Sbb {
         if (smscPropertiesManagement.isDeliveryPause()
                 && (!MessageUtil.isStoreAndForward(sms) || smscPropertiesManagement.getStoreAndForwordMode() == StoreAndForwordMode.fast)) {
             SmscProcessingException e = new SmscProcessingException("SMSC is paused", SmppConstants.STATUS_SYSERR,
-                    MAPErrorCode.facilityNotSupported, SmscProcessingException.HTTP_ERROR_CODE_NOT_SET, null);
+                    MAPErrorCode.facilityNotSupported, SmscProcessingException.HTTP_ERROR_CODE_NOT_SET, null,
+                    SmscProcessingException.INTERNAL_ERROR_STATE_PAUSED);
             e.setSkipErrorLogging(true);
             throw e;
         }
         // checking if cassandra database is available
         if (!persistence.isDatabaseAvailable() && MessageUtil.isStoreAndForward(sms)) {
             SmscProcessingException e = new SmscProcessingException("Database is unavailable", SmppConstants.STATUS_SYSERR,
-                    MAPErrorCode.facilityNotSupported, SmscProcessingException.HTTP_ERROR_CODE_NOT_SET, null);
+                    MAPErrorCode.facilityNotSupported, SmscProcessingException.HTTP_ERROR_CODE_NOT_SET, null,
+                    SmscProcessingException.INTERNAL_ERROR_STATE_DATABASE_NOT_AVAILABLE);
             e.setSkipErrorLogging(true);
             throw e;
         }
@@ -224,7 +227,8 @@ public abstract class SubmitCommonSbb implements Sbb {
                         smscCongestionControl.registerMaxActivityCount1_2Threshold();
                         SmscProcessingException e = new SmscProcessingException("SMSC is overloaded",
                                 SmppConstants.STATUS_THROTTLED, MAPErrorCode.resourceLimitation,
-                                SmscProcessingException.HTTP_ERROR_CODE_NOT_SET, null);
+                                SmscProcessingException.HTTP_ERROR_CODE_NOT_SET, null,
+                                SmscProcessingException.INTERNAL_ERROR_STATE_OVERLOADED);
                         e.setSkipErrorLogging(true);
                         throw e;
                     } else {
@@ -237,7 +241,8 @@ public abstract class SubmitCommonSbb implements Sbb {
                         smscCongestionControl.registerMaxActivityCount1_4Threshold();
                         SmscProcessingException e = new SmscProcessingException("SMSC is overloaded",
                                 SmppConstants.STATUS_THROTTLED, MAPErrorCode.resourceLimitation,
-                                SmscProcessingException.HTTP_ERROR_CODE_NOT_SET, null);
+                                SmscProcessingException.HTTP_ERROR_CODE_NOT_SET, null,
+                                SmscProcessingException.INTERNAL_ERROR_STATE_OVERLOADED);
                         e.setSkipErrorLogging(true);
                         throw e;
                     } else {
@@ -288,9 +293,10 @@ public abstract class SubmitCommonSbb implements Sbb {
                             try {
                                 this.scheduler.injectSmsOnFly(sms.getSmsSet(), true);
                             } catch (Exception e) {
-                                throw new SmscProcessingException("Exception when runnung injectSmsOnFly(): " + e.getMessage(),
+                                throw new SmscProcessingException("Exception when running injectSmsOnFly(): " + e.getMessage(),
                                         SmppConstants.STATUS_SYSERR, MAPErrorCode.systemFailure,
-                                        SmscProcessingException.HTTP_ERROR_CODE_NOT_SET, null, e);
+                                        SmscProcessingException.HTTP_ERROR_CODE_NOT_SET, null, e,
+                                        SmscProcessingException.INTERNAL_ERROR_INJECT_STORE_AND_FORWARD_NOT_SET);
                             }
                         } else {
                             // store and forward
@@ -301,9 +307,10 @@ public abstract class SubmitCommonSbb implements Sbb {
                                     this.scheduler.injectSmsOnFly(sms.getSmsSet(), true);
                                 } catch (Exception e) {
                                     throw new SmscProcessingException(
-                                            "Exception when runnung injectSmsOnFly(): " + e.getMessage(),
+                                            "Exception when running injectSmsOnFly(): " + e.getMessage(),
                                             SmppConstants.STATUS_SYSERR, MAPErrorCode.systemFailure,
-                                            SmscProcessingException.HTTP_ERROR_CODE_NOT_SET, null, e);
+                                            SmscProcessingException.HTTP_ERROR_CODE_NOT_SET, null, e,
+                                            SmscProcessingException.INTERNAL_ERROR_INJECT_STORE_AND_FORWARD_FAST);
                                 }
                             } else {
                                 try {
@@ -316,7 +323,8 @@ public abstract class SubmitCommonSbb implements Sbb {
                                     throw new SmscProcessingException(
                                             "PersistenceException when storing LIVE_SMS : " + e.getMessage(),
                                             SmppConstants.STATUS_SUBMITFAIL, MAPErrorCode.systemFailure,
-                                            SmscProcessingException.HTTP_ERROR_CODE_NOT_SET, null, e);
+                                            SmscProcessingException.HTTP_ERROR_CODE_NOT_SET, null, e,
+                                            SmscProcessingException.INTERNAL_ERROR_INJECT_STORE_AND_FORWARD_NORMAL);
                                 }
                             }
                         }
@@ -328,23 +336,12 @@ public abstract class SubmitCommonSbb implements Sbb {
 
             if (mProcResult.isMessageRejected()) {
                 sms0.setMessageDeliveryResultResponse(null);
-                final SmscProcessingException e = new SmscProcessingException("Message is rejected by MProc rules.",
-                        getErrorCode(mProcResult.getSmppErrorCode(), SmppConstants.STATUS_SUBMITFAIL),
-                        getErrorCode(mProcResult.getMapErrorCode(), MAPErrorCode.systemFailure),
-                        getErrorCode(mProcResult.getHttpErrorCode(), SmscProcessingException.HTTP_ERROR_CODE_NOT_SET), null);
-                e.setSkipErrorLogging(true);
-                if (logger.isInfoEnabled()) {
-                    logger.info("Incoming message is rejected by mProc rules, message=[" + sms0 + "]");
-                }
-                throw e;
+                rejectSmsByMProc(sms0, "Message is rejected by MProc rules.", mProcResult);
             }
             if (mProcResult.isMessageDropped()) {
                 sms0.setMessageDeliveryResultResponse(null);
                 smscStatAggregator.updateMsgInFailedAll();
-                if (logger.isInfoEnabled()) {
-                    logger.info("Incoming message is dropped by mProc rules, message=[" + sms0 + "]");
-                }
-                return;
+                rejectSmsByMProc(sms0, "Message is dropped by MProc rules.", mProcResult);
             }
 
             smscStatAggregator.updateMsgInReceivedAll();
@@ -370,7 +367,7 @@ public abstract class SubmitCommonSbb implements Sbb {
     public enum MaxActivityCountFactor {
         factor_12, factor_14,
     }
-    
+
     private static int getErrorCode(final int anErrorCode, final int aDefaultErrorCode) {
         if (anErrorCode < 0) {
             return aDefaultErrorCode;
@@ -378,4 +375,23 @@ public abstract class SubmitCommonSbb implements Sbb {
         return anErrorCode;
     }
 
+    private void rejectSmsByMProc(final Sms anSms, final String aReason, final MProcResult anMProcResult) throws SmscProcessingException {
+        final SmscProcessingException e = new SmscProcessingException(aReason,
+                getErrorCode(anMProcResult.getSmppErrorCode(), SmppConstants.STATUS_SUBMITFAIL),
+                getErrorCode(anMProcResult.getMapErrorCode(), MAPErrorCode.systemFailure),
+                getErrorCode(anMProcResult.getHttpErrorCode(), SmscProcessingException.HTTP_ERROR_CODE_NOT_SET), null,
+                SmscProcessingException.INTERNAL_ERROR_MPROC_REJECT);
+        e.setSkipErrorLogging(true);
+        if (logger.isInfoEnabled()) {
+            logger.info("Incoming message is " + (anMProcResult.isMessageRejected() ? "rejected" : "dropped")
+                    + "by mProc rules, message=[" + anSms + "]");
+        }
+        if (smscPropertiesManagement.isGenerateRejectionCdr()) {
+            CdrGenerator.generateCdr(anSms, (anMProcResult.isMessageRejected() ? CdrGenerator.CDR_MPROC_REJECTED : CdrGenerator.CDR_MPROC_DROPPED),
+                    aReason, smscPropertiesManagement.getGenerateReceiptCdr(),
+                    MessageUtil.isNeedWriteArchiveMessage(anSms, smscPropertiesManagement.getGenerateCdr()), false, true,
+                    smscPropertiesManagement.getCalculateMsgPartsLenCdr(), smscPropertiesManagement.getDelayParametersInCdr());
+        }
+        throw e;
+    }
 }
