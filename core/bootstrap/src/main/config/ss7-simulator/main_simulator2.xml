@@ -11,17 +11,14 @@
 		<remoteHost2 value=""/>
 	</m3ua>
 	<dialogic SourceModuleId="0" DestinationModuleId="0"/>
-	<sccp routeOnGtMode="true" remoteSpc="2" localSpc="1" ni="2" remoteSsn="8" localSsn="8" translationType="0">
+	<sccp routeOnGtMode="true" remoteSpc="2" localSpc="1" ni="2" remoteSsn="8" localSsn="8" localSsn2="6" translationType="0">
 		<globalTitleType value="Translation type, numbering plan, encoding scheme and NOA ind"/>
 		<addressNature value="INTERNATIONAL"/>
 		<numberingPlan value="ISDN_TELEPHONY"/>
 		<sccpProtocolVersion value="ITU"/>
-		<callingPartyAddressDigits value="1111112"/>
+		<callingPartyAddressDigits value="888800"/>
 	</sccp>
 	<map>
-		<remoteAddressDigits value=""/>
-		<origReference value=""/>
-		<destReference value=""/>
 		<origReferenceAddressNature value="international_number"/>
 		<origReferenceNumberingPlan value="ISDN"/>
 		<destReferenceAddressNature value="international_number"/>
@@ -46,14 +43,14 @@
 		<msisdnNumberingPlan value="ISDN"/>
 		<processSsRequestAction value="Manual response"/>
 	</testUssdServer>
-	<testSmsClient smscSsn="8" sriScAddressNotIncluded="false" oneNotificationFor100Dialogs="false" return20PersDeliveryErrors="false" continueDialog="false">
-		<serviceCenterAddress value="1111"/>
+	<testSmsClient smscSsn="8" nationalLanguageCode="0" sriScAddressNotIncluded="false" oneNotificationFor100Dialogs="false" return20PersDeliveryErrors="false" continueDialog="false">
+		<serviceCenterAddress value="22220"/>
 		<sriResponseImsi value="555667"/>
-		<sriResponseVlr value="8786876"/>
+		<sriResponseVlr value="888801"/>
 		<addressNature value="international_number"/>
 		<numberingPlan value="ISDN"/>
 		<mapProtocolVersion value="MAP protocol version 3"/>
-		<typeOfNumber value="InternationalNumber"/>
+		<typeOfNumber value="Unknown"/>
 		<numberingPlanIdentification value="ISDNTelephoneNumberingPlan"/>
 		<smsCodingType value="GSM7"/>
 		<sriReaction value="Return success"/>
@@ -70,10 +67,26 @@
 		<numberingPlanIdentification value="ISDNTelephoneNumberingPlan"/>
 		<smsCodingType value="GSM7"/>
 	</testSmsServer>
+	<testAtiClient subscriberIdentityType="false">
+		<addressNature value="international_number"/>
+		<numberingPlan value="ISDN"/>
+		<gsmScfAddress value="000"/>
+	</testAtiClient>
+	<testAtiServer>
+		<atiReaction value="Return success"/>
+	</testAtiServer>
 	<testCapScf>
 		<capApplicationContext value="CAP_V4_capscf_ssfGeneric 23.3.8"/>
 	</testCapScf>
 	<testCapSsf>
 		<capApplicationContext value="CAP_V1_gsmSSF_to_gsmSCF 0.50.0"/>
 	</testCapSsf>
+	<testCheckImeiClient maxConcurrentDialogs="10" oneNotificationFor100Dialogs="false">
+		<imei value=""/>
+		<mapProtocolVersion value="MAP protocol version 3"/>
+		<checkImeiClientAction value="Manual operation"/>
+	</testCheckImeiClient>
+	<testCheckImeiServer oneNotificationFor100Dialogs="false">
+		<autoEquipmentStatus value="whiteListed"/>
+	</testCheckImeiServer>
 </configurationData>

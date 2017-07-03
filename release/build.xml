@@ -31,13 +31,13 @@
 	<property name="restcomm-slee.release" value="2.9.128" />
 
 	<!-- jss7 stack and MAP RA -->
-	<property name="restcomm-jss7.build-number" value="1398" />
-	<property name="restcomm-jss7.version" value="7.3.${restcomm-jss7.build-number}" />
-	<property name="restcomm-jss7.release" value="7.3.1398" />
+	<property name="restcomm-jss7.build-number" value="1404" />
+	<property name="restcomm-jss7.version" value="7.4.${restcomm-jss7.build-number}" />
+	<property name="restcomm-jss7.release" value="7.4.1404" />
 
-	<property name="restcomm-map-ra.build-number" value="72" />
-	<property name="restcomm-map-ra.version" value="7.3.${restcomm-map-ra.build-number}" />
-	<property name="restcomm-map-ra.release" value="7.3.72" />
+	<property name="restcomm-map-ra.build-number" value="76" />
+	<property name="restcomm-map-ra.version" value="7.4.${restcomm-map-ra.build-number}" />
+	<property name="restcomm-map-ra.release" value="7.4.76" />
 
 	<!-- Diameter mux and RAs -->
 	<property name="restcomm-diam.build-number" value="178" />
@@ -52,7 +52,7 @@
 	<property name="restcomm-smpp-ra.version" value="7.1" />
 
 	<!-- Cassandra community version -->
-	<property name="community-cassandra.version" value="3.10" /> <!-- 2.2.6 -->
+	<property name="community-cassandra.version" value="3.11.0" /> <!-- 2.2.6 -->
 
 
 	<!-- JainSlee SIP RA DU - we do not use it now - getting from SLEE binaries -->
@@ -567,7 +567,7 @@
 			</fileset>
 		</copy>
 		<copy file="${checkout.restcomm-smsc.dir}/core/slee/resource-adaptors/du/target/smsc-resource-adaptors-du-${restcomm.smsc.release.version}.jar" todir="${release.dir}/jboss-5.1.0.GA/server/simulator/deploy" failonerror="true" />
-		<copy file="${checkout.restcomm-smsc.dir}/core/slee/resource-adaptors/mproc-ra/du-ratype/target/mproc-ratype-du-${restcomm.smsc.release.version}.jar" todir="${release.dir}/jboss-5.1.0.GA/simulator/default/deploy" failonerror="true" />
+		<copy file="${checkout.restcomm-smsc.dir}/core/slee/resource-adaptors/mproc-ra/du-ratype/target/mproc-ratype-du-${restcomm.smsc.release.version}.jar" todir="${release.dir}/jboss-5.1.0.GA/server/simulator/deploy" failonerror="true" />
 		<copy file="${checkout.restcomm-smsc.dir}/core/slee/resource-adaptors/mproc-ra/du-ra/target/mproc-ra-du-${restcomm.smsc.release.version}.jar" todir="${release.dir}/jboss-5.1.0.GA/server/simulator/deploy" failonerror="true" />
 		<copy file="${checkout.restcomm-smsc.dir}/core/slee/services/du/target/smsc-services-du-${restcomm.smsc.release.version}.jar" todir="${release.dir}/jboss-5.1.0.GA/server/simulator/deploy" failonerror="true" />
     	<copy file="${checkout.dir}/${restcomm-map-ra.download.jar.file}" todir="${release.dir}/jboss-5.1.0.GA/server/simulator/deploy" failonerror="true" />
@@ -670,6 +670,8 @@
 		<!-- jss7 config-->    	
 		<copy file="${checkout.restcomm-smsc.dir}/core/bootstrap/src/main/config/ss7-simulator/main_simulator2.xml" todir="${release.dir}/tools/restcomm-jss7-simulator/data" failonerror="true" />
 		<copy file="${checkout.restcomm-smsc.dir}/core/bootstrap/src/main/config/ss7-simulator/win_simulator2.xml" todir="${release.dir}/tools/restcomm-jss7-simulator/data" failonerror="true" />
+		<copy file="${checkout.restcomm-smsc.dir}/core/bootstrap/src/main/config/ss7-simulator/main_hr_simulator2.xml" todir="${release.dir}/tools/restcomm-jss7-simulator/data" failonerror="true" />
+		<copy file="${checkout.restcomm-smsc.dir}/core/bootstrap/src/main/config/ss7-simulator/win_hr_simulator2.xml" todir="${release.dir}/tools/restcomm-jss7-simulator/data" failonerror="true" />
 
 		<!-- jDiameter - mux & RA's-->    	
 		<copy todir="${release.dir}/jboss-5.1.0.GA/server/default/deploy/restcomm-diameter-mux-${restcomm-diam.version}.sar" failonerror="true">
