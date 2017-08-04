@@ -713,15 +713,24 @@ public class SmppTestingForm extends JDialog implements SmppAccepter {
             pdu.setEsmClass((byte) esmClass);
 
 			switch (validityType) {
-            case ValidityPeriod_5min:
-                pdu.setValidityPeriod(MessageUtil.printSmppRelativeDate(0, 0, 0, 0, 5, 0));
-                break;
-            case ValidityPeriod_2hours:
-                pdu.setValidityPeriod(MessageUtil.printSmppRelativeDate(0, 0, 0, 2, 0, 0));
-                break;
-			case ScheduleDeliveryTime_5min:
-			    pdu.setScheduleDeliveryTime(MessageUtil.printSmppRelativeDate(0, 0, 0, 0, 5, 0));
-				break;
+				case ValidityPeriod_5min_Rel:
+	                pdu.setValidityPeriod(MessageUtil.printSmppRelativeDate(0, 0, 0, 0, 5, 0));
+    	            break;
+				case ValidityPeriod_5min_Abs:
+					pdu.setValidityPeriod(MessageUtil.printSmppAbsoluteDate(new Date(System.currentTimeMillis() + 300000), -(new Date()).getTimezoneOffset()));
+					break;
+				case ValidityPeriod_2hours_Rel:
+                	pdu.setValidityPeriod(MessageUtil.printSmppRelativeDate(0, 0, 0, 2, 0, 0));
+                	break;
+				case ValidityPeriod_2hours_Abs:
+					pdu.setValidityPeriod(MessageUtil.printSmppAbsoluteDate(new Date(System.currentTimeMillis() + 7200000), -(new Date()).getTimezoneOffset()));
+					break;
+				case ScheduleDeliveryTime_5min_Rel:
+			    	pdu.setScheduleDeliveryTime(MessageUtil.printSmppRelativeDate(0, 0, 0, 0, 5, 0));
+					break;
+				case ScheduleDeliveryTime_5min_Abs:
+					pdu.setScheduleDeliveryTime(MessageUtil.printSmppAbsoluteDate(new Date(System.currentTimeMillis() + 300000), -(new Date()).getTimezoneOffset()));
+					break;
 			}
 
             pdu.setDataCoding((byte) dcs);

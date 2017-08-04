@@ -60,7 +60,7 @@ public class SmppSimulatorParameters {
 	private NPI destNpi = NPI.ISDN;
     private String sourceAddress = "6666";
 	private String destAddress = "5555";
-    private String addressRange = "6666";
+    private String addressRange = "^.*";
 
 	private String messageText = "Hello!";
 	private EncodingType encodingType = EncodingType.GSM7_DCS_0;
@@ -466,7 +466,9 @@ public class SmppSimulatorParameters {
     }
 
     public enum ValidityType {
-		NoSpecial, ValidityPeriod_5min, ValidityPeriod_2hours, ScheduleDeliveryTime_5min;
+//		NoSpecial, ValidityPeriod_5min, ValidityPeriod_2hours, ScheduleDeliveryTime_5min;
+        NoSpecial, ValidityPeriod_5min_Rel, ValidityPeriod_5min_Abs, ValidityPeriod_2hours_Rel, ValidityPeriod_2hours_Abs,
+        ScheduleDeliveryTime_5min_Rel, ScheduleDeliveryTime_5min_Abs;
     }
 
     public enum MCDeliveryReceipt {
