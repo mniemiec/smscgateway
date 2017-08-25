@@ -115,6 +115,8 @@ public class Sms implements Serializable {
     private String extraData_2;
     private String extraData_3;
     private String extraData_4;
+
+    private String exposureLayerData;
     
     private MessageDeliveryResultResponseInterface messageDeliveryResultResponse;
 
@@ -884,4 +886,11 @@ public class Sms implements Serializable {
         }
     }
 
+	public String getExposureLayerData() {
+		return exposureLayerData;
+	}
+
+	public void setExposureLayerData(String exposureLayerData) {
+		this.exposureLayerData = exposureLayerData;
+	}
 }
