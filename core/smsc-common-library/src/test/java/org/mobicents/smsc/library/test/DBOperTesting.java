@@ -32,7 +32,7 @@ public class DBOperTesting {
             DBOperations_C2_Proxy db = new DBOperations_C2_Proxy();
 
             logger.info("starting DBOperations_C2 ...");
-            String keySpacename = "RestCommSMSC1";
+            String keySpacename = "RestCommSMSC";
 //            String keySpacename = "RestCommSMSC";
             db.start("127.0.0.1", 9042, keySpacename, "cassandra", "cassandra", 60, 60, 60 * 10, 1, 10000000000L);
 
