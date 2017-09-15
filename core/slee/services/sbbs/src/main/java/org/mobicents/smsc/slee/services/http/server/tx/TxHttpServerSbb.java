@@ -700,6 +700,11 @@ public abstract class TxHttpServerSbb extends SubmitCommonSbb implements Sbb {
 
         ArrayList<Sms> msgList = new ArrayList<Sms>(addressList.size());
 
+        SmsExposureLayerData elData = null;
+        if (incomingData.getExposureLayerData() != null) {
+            elData = new SmsExposureLayerData(incomingData.getExposureLayerData());
+        }
+
         for (String address : addressList) {
             // generating message id for each message.
             long messageId = store.c2_getNextMessageId();
@@ -738,8 +743,19 @@ public abstract class TxHttpServerSbb extends SubmitCommonSbb implements Sbb {
                     // TODO: esmCls - read from smpp documentation
                     sms.setEsmClass(smscPropertiesManagement.getHttpDefaultMessagingMode());
                 }
-                if (incomingData.getExposureLayerData() != null) {
-                    sms.setExposureLayerData(incomingData.getExposureLayerData());
+
+                if (elData != null) {
+                    String messageIds = elData.getMessageId();
+                    String correlationIds = elData.getCorrelationId();
+
+                    elData.setMessageId(elData.getFirstMessageId());
+                    elData.setCorrelationId(elData.getFirstCorrelationId());
+                    sms.setExposureLayerData(elData.getExposureLayerDataString());
+
+                    elData.setMessageId(messageIds);
+                    elData.setCorrelationId(correlationIds);
+                    elData.removeFirstMessageId();
+                    elData.removeFirstCorrelationId();
                 }
                 // TODO: regDlvry - read from smpp documentation
                 int registeredDelivery = smscPropertiesManagement.getHttpDefaultRDDeliveryReceipt();

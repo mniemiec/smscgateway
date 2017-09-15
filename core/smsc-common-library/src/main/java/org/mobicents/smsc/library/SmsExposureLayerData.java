@@ -35,8 +35,11 @@ public class SmsExposureLayerData {
     private long elQueStart;
     private long elQueStop;
 
+    private final String DATA_SEPARATOR = ":";
+    private final String IDS_SEPARATOR = ",";
+
     public SmsExposureLayerData(String elDataString) throws NumberFormatException {
-        String[] splitted = elDataString.split(":");
+        String[] splitted = elDataString.split(DATA_SEPARATOR);
         if (splitted.length >= 6) {
             messageId = splitted[0];
             correlationId = splitted[1];
@@ -45,6 +48,54 @@ public class SmsExposureLayerData {
             elQueStart = Long.valueOf(splitted[4]);
             elQueStop = Long.valueOf(splitted[5]);
         }
+    }
+
+    public String getFirstMessageId() {
+        if (messageId != null) {
+            if (messageId.contains(IDS_SEPARATOR)) {
+                return messageId.substring(0, messageId.indexOf(IDS_SEPARATOR));
+            }
+            return messageId;
+        }
+        return "";
+    }
+
+    public void removeFirstMessageId() {
+        if (messageId.contains(IDS_SEPARATOR)) {
+            this.messageId = messageId.substring(messageId.indexOf(IDS_SEPARATOR) + 1);
+        }
+    }
+
+    public String getFirstCorrelationId() {
+        if (correlationId != null) {
+            if (correlationId.contains(IDS_SEPARATOR)) {
+                return correlationId.substring(0, correlationId.indexOf(IDS_SEPARATOR));
+            }
+            return correlationId;
+        }
+        return "";
+    }
+
+    public void removeFirstCorrelationId() {
+        if (correlationId.contains(IDS_SEPARATOR)) {
+            this.correlationId = correlationId.substring(correlationId.indexOf(IDS_SEPARATOR) + 1);
+        }
+    }
+
+    public String getExposureLayerDataString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(messageId)
+                .append(DATA_SEPARATOR)
+                .append(correlationId)
+                .append(DATA_SEPARATOR)
+                .append(elApiStart)
+                .append(DATA_SEPARATOR)
+                .append(elApiStop)
+                .append(DATA_SEPARATOR)
+                .append(elQueStart)
+                .append(DATA_SEPARATOR)
+                .append(elQueStop);
+        return sb.toString();
     }
 
     public String getMessageId() {
